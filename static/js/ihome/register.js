@@ -22,7 +22,7 @@ function generateImageCode() {
     // 1.生成uuid
     uuid = generateUUID();
     // 2. 拼接请求地址
-    var url = 'image_code?uuid=' + uuid + '&last_uuid=' + last_uuid;
+    var url = '/user/image_code?uuid=' + uuid + '&last_uuid=' + last_uuid;
     // 3. 将url赋值给img标签的src属性
     $('.image-code>img').attr('src', url);
     // 4. 记录uuid，下次使用时用于核对

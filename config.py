@@ -9,12 +9,11 @@ import os
 
 # Application配置参数
 settings = dict(
-        static_path=os.path.join(os.path.dirname(__file__), "static"),
-        cookie_secret="FhLXI+BRRomtuaG47hoXEg3JCdi0BUi8vrpWmoxaoyI=",
-        xsrf_cookies=True,
-        debug=True
+    static_path=os.path.join(os.path.dirname(__file__), "static"),
+    cookie_secret="FhLXI+BRRomtuaG47hoXEg3JCdi0BUi8vrpWmoxaoyI=",
+    xsrf_cookies=True,
+    debug=True
 )
-
 
 # 数据库配置参数
 mysql_options = dict(
@@ -27,7 +26,9 @@ mysql_options = dict(
 # redis配置参数
 redis_options = dict(
     host="127.0.0.1",
-    port=6379
+    port=6379,
+    db=0,
+    decode_responses=True
 )
 
 # 日志配置
