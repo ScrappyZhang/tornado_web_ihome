@@ -53,7 +53,7 @@ function sendSMSCode() {
         url:"/user/smscode",
         method:"POST",
         headers: {
-            "X-CSRFToken": getCookie('csrf_token')
+            "X-Csrftoken": getCookie('_xsrf')
         }, //增加csrf请求头
         data: JSON.stringify(datas),
         contentType:"application/json",
@@ -155,7 +155,7 @@ $(document).ready(function() {
             contentType:"application/json",
             data: JSON.stringify(req),
             headers: {
-            "X-CSRFToken": getCookie("csrf_token") // 后端开启了csrf防护，所以前端发送json数据的时候，需要包含这个请求头
+            "X-Csrftoken": getCookie("_xsrf") // 后端开启了csrf防护，所以前端发送json数据的时候，需要包含这个请求头
             },
             dataType: "json",
             success:function (resp) {

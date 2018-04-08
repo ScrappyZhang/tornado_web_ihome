@@ -43,10 +43,10 @@ class SmsCodeHandler(BaseHandler):
     """短信验证码"""
 
     def post(self):
-        # 1. 获取参数mobile、 text（图片验证码）、uuid
+        # 1. 获取参数mobile、 text（图片验证码）、id
         mobile = self.json_args.get("mobile")
         image_code = self.json_args.get("text")
-        uuid = self.json_args.get("uuid")
+        uuid = self.json_args.get("id")
         # 2. 参数校验
         if not all((mobile, image_code, uuid)):
             return self.write(dict(errno=RET.PARAMERR, errmsg="参数缺失"))
@@ -55,7 +55,7 @@ class SmsCodeHandler(BaseHandler):
         # 3. 核对图片验证码
         # 3.1 获取redis中的图片验证码
         try:
-            real_image_code = self.redis.get("ImageCode_%s" % image_code)
+            real_image_code = self.redis.get("ImageCode_%s" % uuid)
         except Exception as e:
             logging.error(e)
             return self.write(dict(errno=RET.DBERR, errmsg="查询验证码错误"))
@@ -85,7 +85,7 @@ class SmsCodeHandler(BaseHandler):
                 return self.write(dict(errno=RET.DATAEXIST, errmsg="手机号已注册"))
 
         # 4.2 生成短信验证码
-        sms_code = "%04" % random.randint(1, 10000)
+        sms_code = "%04d" % random.randint(1, 10000)
         print(sms_code)  # 打印方便调试
         # 4.3 将验证码存入redis
         try:
