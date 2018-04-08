@@ -9,7 +9,10 @@ import os
 
 # Application配置参数
 settings = dict(
-
+        static_path=os.path.join(os.path.dirname(__file__), "static"),
+        cookie_secret="FhLXI+BRRomtuaG47hoXEg3JCdi0BUi8vrpWmoxaoyI=",
+        xsrf_cookies=True,
+        debug=True
 )
 
 
