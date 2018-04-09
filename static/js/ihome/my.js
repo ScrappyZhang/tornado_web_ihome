@@ -9,7 +9,7 @@ function logout() {
         url:"/user/session",
         type:"delete",
         headers: {
-            "X-CSRFToken": getCookie("csrf_token")
+            "X-Csrftoken": getCookie('_xsrf')
         },
         dataType:"json",
         success:function (resp) {
@@ -23,7 +23,7 @@ function logout() {
 $(document).ready(function(){
 
     // 在页面加载完毕之后去加载个人信息
-    $.get('/user/users', function (resp) {
+    $.get('/users', function (resp) {
         if (resp.errno == "0") {
             $("#user-name").html(resp.data.name);
             $("#user-mobile").html(resp.data.mobile);
