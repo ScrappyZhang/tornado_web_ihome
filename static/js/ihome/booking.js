@@ -26,7 +26,7 @@ function showErrorMsg() {
 
 $(document).ready(function(){
     // 判断用户是否登录
-    $.get('/user/session', function (resp) {
+    $.get('/login', function (resp) {
         if ("0" != resp.errno) {
             location.href = '/'
         }
@@ -58,9 +58,9 @@ $(document).ready(function(){
     // 获取房屋的基本信息
     $.get("/house/" + houseId, function(resp){
         if (0 == resp.errno) {
-            $(".house-info>img").attr("src", resp.data.house.img_urls[0]);
-            $(".house-text>h3").html(resp.data.house.title);
-            $(".house-text>p>span").html((resp.data.house.price/100.0).toFixed(0));
+            $(".house-info>img").attr("src", resp.data.images[0]);
+            $(".house-text>h3").html(resp.data.title);
+            $(".house-text>p>span").html((resp.data.price/100.0).toFixed(0));
         }
     });
     // 订单提交

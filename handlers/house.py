@@ -5,6 +5,8 @@
 @File    : house.py
 '''
 import logging
+import datetime
+import math
 
 from handlers.BaseHandler import BaseHandler
 
@@ -62,6 +64,130 @@ class HouseIndexHandler(BaseHandler):
 
 
 class NewHouseHandler(BaseHandler):
+    def get(self):
+        # 1. 获取前端参数aid sd ed sk p
+        """
+                传入参数说明
+                start_date 用户查询的起始时间 sd     非必传   ""          "2017-02-28"
+                end_date    用户查询的终止时间 ed    非必传   ""
+                area_id     用户查询的区域条件   aid 非必传   ""
+                sort_key    排序的关键词     sk     非必传   "new"      "new" "booking" "price-inc"  "price-des"
+                page        返回的数据页数     p     非必传   1
+        """
+        start_date_str = self.get_argument("sd", "")
+        end_date_str = self.get_argument("ed", "")
+        area_id = self.get_argument("aid", "")
+        # booking(订单量), price-inc(低到高), price-des(高到低),
+        sort_key = self.get_argument("sk", "new")
+        page = self.get_argument("p", "1")
+
+        # 2. 前端参数校验——判断日期格式、sort_Key 字段的值、page的整数、区域area_id
+        # 2.1 page整数化
+        try:
+            page = int(page)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.PARAMERR, errmsg="页码参数错误"))
+        # 2.2 排序方式校验
+        if sort_key not in ("new", "booking", "price-inc", "price-des"):
+            return self.write(dict(errno=RET.PARAMERR, errmsg="排序参数错误"))
+        # 2.3 日期处理
+        try:
+            start_date = None
+            end_date = None
+            if start_date_str:
+                start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d")
+            if end_date_str:
+                end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d')
+            # 2.3.1若开始时间大于或等于结束时间就报错
+            if start_date and end_date:
+                assert start_date < end_date, Exception('开始时间大于结束时间')
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.PARAMERR, errmsg='日期错误'))
+        # TODO redis
+        # 3. 查询房屋
+        # 涉及到表： ih_house_info 房屋的基本信息  ih_user_profile 房东的用户信息 ih_order_info 房屋订单数据
+        sql = "select distinct hi_title,hi_house_id,hi_price,hi_room_count,hi_address,hi_order_count,up_avatar,hi_index_image_url,hi_ctime" \
+              " from ih_house_info inner join ih_user_profile on hi_user_id=up_user_id left join ih_order_info" \
+              " on hi_house_id=oi_house_id"
+        sql_total_count = "select count(distinct hi_house_id) count from ih_house_info inner join ih_user_profile on hi_user_id=up_user_id left join ih_order_info on hi_house_id=oi_house_id"
+        sql_where = []  # 用来保存sql语句的where条件
+        sql_params = {}  # 用来保存sql查询所需的动态数据
+        # 3.1 日期过滤条件
+        if start_date and end_date:
+            sql_part = "((oi_begin_date>%(end_date)s or oi_end_date<%(start_date)s) " \
+                       "or (oi_begin_date is null and oi_end_date is null))"
+            sql_where.append(sql_part)
+            sql_params["start_date"] = start_date
+            sql_params["end_date"] = end_date
+        elif start_date:
+            sql_part = "(oi_end_date<%(start_date)s or (oi_begin_date is null and oi_end_date is null))"
+            sql_where.append(sql_part)
+            sql_params["start_date"] = start_date
+        elif end_date:
+            sql_part = "(oi_begin_date>%(end_date)s or (oi_begin_date is null and oi_end_date is null))"
+            sql_where.append(sql_part)
+            sql_params["end_date"] = end_date
+        # 3.2 地区过滤条件
+        if area_id:
+            sql_part = "hi_area_id=%(area_id)s"
+            sql_where.append(sql_part)
+            sql_params["area_id"] = area_id
+        # 3.3 sql增加where过滤条件
+        if sql_where:
+            sql += " where "
+            sql += " and ".join(sql_where)
+        # 3.4 查询结果总条目
+        try:
+            ret = self.db.get(sql_total_count, **sql_params)
+        except Exception as e:
+            logging.error(e)
+            total_page = -1
+        else:
+            total_page = int(math.ceil(ret["count"] / float(constants.HOUSE_LIST_PAGE_CAPACITY)))
+            if page > total_page:
+                return self.write(dict(errno=RET.OK, errmsg="OK", data=[], total_page=total_page))
+        # 3.5 sql语句增加排序
+        if "new" == sort_key:  # 按最新上传时间排序
+            sql += " order by hi_ctime desc"
+        elif "booking" == sort_key:  # 最受欢迎
+            sql += " order by hi_order_count desc"
+        elif "price-inc" == sort_key:  # 价格由低到高
+            sql += " order by hi_price asc"
+        elif "price-des" == sort_key:  # 价格由高到低
+            sql += " order by hi_price desc"
+        # 3.6 sql语句查询第page页
+        if 1 == page:
+            sql += " limit %s" % constants.HOUSE_LIST_PAGE_CAPACITY
+        else:
+            sql += " limit %s,%s" % (
+            (page - 1) * constants.HOUSE_LIST_PAGE_CAPACITY, constants.HOUSE_LIST_PAGE_CAPACITY)
+        # 3.7 查询数据库
+        try:
+            ret = self.db.query(sql, **sql_params)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.DBERR, errmsg="查询出错"))
+        # 3.8 数据处理
+        data = []
+        if ret:
+            for l in ret:
+                house = dict(
+                    house_id=l["hi_house_id"],
+                    title=l["hi_title"],
+                    price=l["hi_price"],
+                    room_count=l["hi_room_count"],
+                    address=l["hi_address"],
+                    order_count=l["hi_order_count"],
+                    user_avatar=constants.QINIU_URL_PREFIX + l["up_avatar"] if l.get("up_avatar") else "",
+                    img_url=constants.QINIU_URL_PREFIX + l["hi_index_image_url"] if l.get(
+                        "hi_index_image_url") else ""
+                )
+                data.append(house)
+        # 4. 返回房屋列表信息
+        self.write(dict(errno=RET.OK, errmsg="OK", data=data, total_page=total_page))
+
     @login_required
     def post(self):
         # 1. 获取输入参数
@@ -274,5 +400,4 @@ class DetailHouseInfoHandler(BaseHandler):
         data["comments"] = comments
 
         # 4. 返回数据
-        self.write(dict(errno=RET.OK, errmsg="OK", user_id=user_id,data=data))
-
+        self.write(dict(errno=RET.OK, errmsg="OK", user_id=user_id, data=data))
