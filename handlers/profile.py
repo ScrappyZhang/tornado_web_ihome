@@ -98,3 +98,43 @@ class NameHandler(BaseHandler):
         except Exception as e:
             logging.error(e)
         self.write({"errcode": RET.OK, "errmsg": "OK"})
+
+
+class AuthHandler(BaseHandler):
+    @login_required
+    def get(self):
+        # 获取实名认证信息
+        # 1、获取session的user_id
+        user_id = self.session.data["user_id"]
+        # 2、查询实名认证信息up_real_name 、up_id_card
+        sql = "select up_real_name, up_id_card from ih_user_profile where up_user_id=%(user_id)s"
+        try:
+            user_auth_info = self.db.get(sql, user_id=user_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.DBERR, errmsg="数据库错误"))
+        # 3、返回结果
+        self.write(dict(errno=RET.OK, errmsg="OK", data=user_auth_info))
+
+    @login_required
+    def post(self):
+        # 修改实名认证信息
+        # 1、获取user_id
+        user_id = self.session.data["user_id"]
+        # 2、获取输入参数
+        real_name_input = self.json_args["real_name"]
+        id_card_input = self.json_args["id_card"]
+        # 3、校验输入参数
+        if not all((real_name_input, id_card_input)):
+            return self.write(dict(errno=RET.PARAMERR, errmsg="输入数据不全"))
+        # 3.1身份证格式校验（略过）
+        # 4、修改数据库信息
+        try:
+            self.db.execute_rowcount("update ih_user_profile set up_real_name=%s,up_id_card=%s where up_user_id=%s",
+                                     real_name_input, id_card_input, user_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write({"errcode": RET.DBERR, "errmsg": "update failed"})
+
+        # 5、返回结果
+        self.write(dict(errno=RET.OK, errmsg="OK"))

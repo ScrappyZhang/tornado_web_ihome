@@ -21,9 +21,9 @@ $(document).ready(function(){
         }
         else if ("0" == resp.errno) {
             // 如果返回的数据中real_name与id_card不为null，表示用户有填写实名信息
-            if (resp.data.real_name && resp.data.id_card) {
-                $("#real-name").val(resp.data.real_name);
-                $("#id-card").val(resp.data.id_card);
+            if (resp.data.up_real_name && resp.data.up_id_card) {
+                $("#real-name").val(resp.data.up_real_name);
+                $("#id-card").val(resp.data.up_id_card);
                 // 给input添加disabled属性，禁止用户修改
                 $("#real-name").prop("disabled", true);
                 $("#id-card").prop("disabled", true);
@@ -55,7 +55,7 @@ $(document).ready(function(){
             contentType: "application/json",
             dataType: "json",
             headers: {
-                "X-CSRFTOKEN": getCookie("csrf_token")
+                "X-Csrftoken": getCookie('_xsrf')
             },
             success: function (resp) {
                 if (0 == resp.errno) {
