@@ -33,7 +33,30 @@ class HouseIndexHandler(BaseHandler):
     def get(self):
         pass
         # 1. 获取销量最好的5个房屋
+        try:
+            house_ret = self.db.query(
+                "select hi_house_id,hi_title,hi_order_count,hi_index_image_url from ih_house_info " \
+                "order by hi_order_count desc limit %s;" % constants.HOME_PAGE_MAX_HOUSES)
+        except Exception as e:
+            logging.error(e)
+            return self.write({"errno": RET.DBERR, "errmsg": "get data error"})
         # 2. 返回数据 errno errmsg data
+        # 2.1 判断是否有数据
+        if not house_ret:
+            return self.write({"errno": RET.NODATA, "errmsg": "no data"})
+        # 2.2 整理数据
+        houses = []
+        for l in house_ret:
+            if not l["hi_index_image_url"]:
+                continue
+            house = {
+                "house_id": l["hi_house_id"],
+                "title": l["hi_title"],
+                "img_url": constants.QINIU_URL_PREFIX + l["hi_index_image_url"]
+            }
+            houses.append(house)
+        # 2.3 返回数据data
+        self.write(dict(errno=RET.OK, errmsg="OK", data=houses))
 
 
 class NewHouseHandler(BaseHandler):
