@@ -19,7 +19,7 @@ class AreaInfoHandler(BaseHandler):
             areas_info = self.db.query(sql)  # 返回的是列表
         except Exception as e:
             logging.error(e)
-            self.write(dict(errno=RET.DBERR, errmsg="数据库错误"))
+            return self.write(dict(errno=RET.DBERR, errmsg="数据库错误"))
         # 2. 返回数据 errno errmsg data
         self.write(dict(errno=RET.OK, errmsg="获取城区信息成功", data=areas_info))
 

@@ -13,7 +13,7 @@ function getCookie(name) {
 
 $(document).ready(function () {
     // 在页面加载完毕向后端查询用户的信息
-    $.get("/user/users", function(resp){
+    $.get("/users", function(resp){
         // 用户未登录
         if ("4101" == resp.errno) {
             location.href = "/login.html";
@@ -36,7 +36,7 @@ $(document).ready(function () {
             url:"/user/avatar",
             type:"post",
             headers: {
-            "X-CSRFToken": getCookie('csrf_token')
+                "X-Csrftoken": getCookie('_xsrf')
             },
             dataType: "json",
             success: function (resp) {
@@ -69,7 +69,7 @@ $(document).ready(function () {
             data: JSON.stringify({name: name}),
             contentType: "application/json",
             headers: {
-            "X-CSRFToken": getCookie('csrf_token')
+                "X-Csrftoken": getCookie('_xsrf')
             },
             dataType: "json",
             success: function (data) {
