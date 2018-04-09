@@ -4,11 +4,11 @@ $(document).ready(function(){
     $.get("user/auth", function (resp) {
         if (resp.errno == "0") {
             // 判断是否有认证信息
-            if (!(resp.data.real_name && resp.data.id_card)) {
+            if (!(resp.data.up_real_name && resp.data.up_id_card)) {
                 $(".auth-warn").show();
             }else {
                 // 如果用户已实名认证,那么就去请求之前发布的房源
-                $.get("user/houses", function (resp) {
+                $.get("/user/houses", function (resp) {
                     if (resp.errno == "0") {
                         $("#houses-list").html(template("houses-list-tmpl", {"houses": resp.data}))
                     }

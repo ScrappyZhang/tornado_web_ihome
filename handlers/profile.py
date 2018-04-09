@@ -138,3 +138,32 @@ class AuthHandler(BaseHandler):
 
         # 5、返回结果
         self.write(dict(errno=RET.OK, errmsg="OK"))
+
+
+class HouseSourceHandler(BaseHandler):
+    @login_required
+    def get(self):
+        # 1、获取user_id
+        user_id = self.session.data["user_id"]
+        # 2、查询用户房源
+        try:
+            sql = "select a.hi_house_id,a.hi_title,a.hi_price,a.hi_ctime,b.ai_name,a.hi_index_image_url " \
+                  "from ih_house_info a inner join ih_area_info b on a.hi_area_id=b.ai_area_id where a.hi_user_id=%s;"
+            ret = self.db.query(sql, user_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write({"errcode": RET.DBERR, "errmsg": "get data erro"})
+        # 3、返回数据errno errmsg data
+        houses = []
+        if ret:
+            for l in ret:
+                house_info = {
+                    "house_id": l["hi_house_id"],
+                    "title": l["hi_title"],
+                    "price": l["hi_price"],
+                    "ctime": l["hi_ctime"].strftime("%Y-%m-%d"),  # 将返回的Datatime类型格式化为字符串
+                    "area_name": l["ai_name"],
+                    "img_url": constants.QINIU_URL_PREFIX + l["hi_index_image_url"] if l["hi_index_image_url"] else ""
+                }
+                houses.append(house_info)
+        self.write(dict(errno=RET.OK, errmsg="OK", data=houses))
