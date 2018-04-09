@@ -24,8 +24,8 @@ $(document).ready(function(){
             $(".detail-con").html(template("house-detail-tmpl", {house:resp.data}));
 
             // resp.user_id为访问页面用户,resp.data.user_id为房东
-            if (resp.data.user_id != resp.data.house.user_id) {
-                $(".book-house").attr("href", "/booking.html?hid="+resp.data.house.hid);
+            if (resp.data.user_id != resp.user_id) {
+                $(".book-house").attr("href", "/booking.html?hid="+resp.data.hid);
                 $(".book-house").show();
             }
             var mySwiper = new Swiper ('.swiper-container', {
@@ -37,12 +37,5 @@ $(document).ready(function(){
             });
         }
     });
-    // TODO: 数据加载完毕后,需要设置幻灯片对象，开启幻灯片滚动
-    var mySwiper = new Swiper ('.swiper-container', {
-        loop: true,
-        autoplay: 2000,
-        autoplayDisableOnInteraction: false,
-        pagination: '.swiper-pagination',
-        paginationType: 'fraction'
-    });
-})
+
+});

@@ -274,6 +274,5 @@ class DetailHouseInfoHandler(BaseHandler):
         data["comments"] = comments
 
         # 4. 返回数据
-        self.write(dict(errno=RET.OK, errmsg="OK", data=data))
-        pass
+        self.write(dict(errno=RET.OK, errmsg="OK", user_id=user_id,data=data))
 
