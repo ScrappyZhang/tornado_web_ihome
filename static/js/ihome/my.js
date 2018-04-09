@@ -6,7 +6,7 @@ function getCookie(name) {
 // 点击推出按钮时执行的函数
 function logout() {
     $.ajax({
-        url:"/user/session",
+        url:"/login",
         type:"delete",
         headers: {
             "X-Csrftoken": getCookie('_xsrf')
