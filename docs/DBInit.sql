@@ -78,7 +78,7 @@ CREATE TABLE ih_order_info (
     oi_days int unsigned NOT NULL COMMENT '入住天数',
     oi_house_price int unsigned NOT NULL COMMENT '房屋单价，单位分',
     oi_amount int unsigned NOT NULL COMMENT '订单金额，单位分',
-    oi_status tinyint NOT NULL DEFAULT '0' COMMENT '订单状态，0-待接单，1-待支付，2-已支付，3-待评价，4-已完成，5-已取消，6-拒接单',
+    oi_status enum('WAIT_ACCEPT','WAIT_PAYMENT','PAID','WAIT_COMMENT','COMPLETE','CANCELED','REJECTED') NOT NULL DEFAULT 'WAIT_ACCEPT',
     oi_comment text NULL COMMENT '订单评论',
     oi_utime datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
     oi_ctime datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

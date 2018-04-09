@@ -13,6 +13,8 @@ from handlers.BaseHandler import BaseHandler
 from utils.commons import login_required
 from utils.response_code import RET
 
+import constants
+
 
 class OrderHandler(BaseHandler):
     @login_required
@@ -28,7 +30,7 @@ class OrderHandler(BaseHandler):
             return self.write({"errno": RET.PARAMERR, "errmsg": "params error"})
         # 2.2 判断日期
         order_days = (
-        datetime.datetime.strptime(end_date, "%Y-%m-%d") - datetime.datetime.strptime(start_date, "%Y-%m-%d")).days
+            datetime.datetime.strptime(end_date, "%Y-%m-%d") - datetime.datetime.strptime(start_date, "%Y-%m-%d")).days
         if order_days < 0:
             return self.write({"errno": RET.PARAMERR, "errmsg": "date params error"})
         if order_days == 0:
@@ -82,3 +84,96 @@ class OrderHandler(BaseHandler):
             return self.write({"errno": RET.DBERR, "errmsg": "save data error"})
         # 返回结果
         self.write({"errno": RET.OK, "errmsg": "OK"})
+
+
+class OrderListHandler(BaseHandler):
+    @login_required
+    def get(self):
+        # 1. 获取用户角色 role
+        role = self.get_argument("role", "")
+        user_id = self.session.data['user_id']
+        # 2. 校验参数
+        if not role:
+            return self.write(dict(errno=RET.PARAMERR, errmsg="参数错误"))
+        # 3. 查询数据库
+        # 3.1 角色判断
+        try:
+            if role == "custom":
+                # 3.1 若为客户
+                ret = self.db.query("select oi_order_id,hi_title,hi_index_image_url,oi_begin_date,oi_end_date,oi_ctime,"
+                                    "oi_days,oi_amount,oi_status,oi_comment from ih_order_info inner join ih_house_info"
+                                    " on oi_house_id=hi_house_id where oi_user_id=%s order by oi_ctime desc", user_id)
+            else:
+                # 3.2 若为房东
+                ret = self.db.query("select oi_order_id,hi_title,hi_index_image_url,oi_begin_date,oi_end_date,oi_ctime,"
+                                    "oi_days,oi_amount,oi_status,oi_comment from ih_order_info inner join ih_house_info "
+                                    "on oi_house_id=hi_house_id where hi_user_id=%s order by oi_ctime desc", user_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.DBERR, errmsg="数据库查询错误"))
+        # 3.2 查询结果整理
+        orders = []
+        if ret:
+            for l in ret:
+                order = {
+                    "order_id": l["oi_order_id"],
+                    "title": l["hi_title"],
+                    "img_url": constants.QINIU_URL_PREFIX + l["hi_index_image_url"] if l["hi_index_image_url"] else "",
+                    "start_date": l["oi_begin_date"].strftime("%Y-%m-%d"),
+                    "end_date": l["oi_end_date"].strftime("%Y-%m-%d"),
+                    "ctime": l["oi_ctime"].strftime("%Y-%m-%d"),
+                    "days": l["oi_days"],
+                    "amount": l["oi_amount"],
+                    "status": l["oi_status"],
+                    "comment": l["oi_comment"] if l["oi_comment"] else ""
+                }
+                orders.append(order)
+        # 4. 返回数据
+        self.write({"errno": RET.OK, "errmsg": "OK", "data": {"orders": orders}})
+
+
+class OrderStatusHandler(BaseHandler):
+    @login_required
+    def put(self, order_id):
+        # 0. 获取当前用户id
+        user_id = self.session.data["user_id"]
+        # 1. 获取动作参数action
+        action = self.json_args.get("action")
+        if action not in ("accept", "reject"):
+            return self.write(dict(errno=RET.PARAMERR, errmsg="参数错误"))
+        # 2.  校验order_id
+        try:
+            order_id = int(order_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.PARAMERR, errmsg="参数错误"))
+
+        if action == "accept":
+            #  3. 接单
+            # 修改status为"WAIT_COMMENT"
+            try:
+                # 确保房东只能修改属于自己房子的订单
+                sql="update ih_order_info set oi_status=%(status)s " \
+                    "where oi_order_id=%(order_id)s and oi_house_id in " \
+                    "(select hi_house_id from ih_house_info where hi_user_id=%(user_id)s) and oi_status=%(status_o)s"
+                self.db.execute(sql, status="WAIT_COMMENT", order_id=order_id, user_id=user_id, status_o="WAIT_ACCEPT")
+            except Exception as e:
+                logging.error(e)
+                return self.write(dict(errno=RET.DBERR, errmsg="数据库错误"))
+        else:
+            # 4. 拒单
+            reason = self.json_args.get("reason")
+            # 4.1 判断reason是否为空
+            if not reason:
+                return self.write(dict(errno=RET.PARAMERR, errmsg="未填写拒单原因"))
+            try:
+                self.db.execute("update ih_order_info set oi_status=6,oi_comment=%(reject_reason)s "
+                                "where oi_order_id=%(order_id)s and oi_house_id in (select hi_house_id from ih_house_info "
+                                "where hi_user_id=%(user_id)s) and oi_status=%(status)s",
+                                reject_reason=reason, order_id=order_id, user_id=user_id, status="REJECTED")
+            except Exception as e:
+                logging.error(e)
+                return self.write({"errno": RET.DBERR, "errmsg": "DB error"})
+
+        # 5. ok
+        self.write(dict(errno=RET.OK, errmsg="ok"))

@@ -18,7 +18,7 @@ $(document).ready(function () {
     $('.modal').on('show.bs.modal', centerModals);      //当模态框出现的时候
     $(window).on('resize', centerModals);
     // 查询房东的订单
-    $.get("/user/orders?role=landlord", function (resp) {
+    $.get("/order/list?role=landlord", function (resp) {
         if ("0" == resp.errno) {
             $(".orders-list").html(template("orders-list-tmpl", {orders: resp.data.orders}));
             // 查询成功之后需要设置接单和拒单的处理
@@ -41,7 +41,7 @@ $(document).ready(function () {
                     contentType: "application/json",
                     dataType: "json",
                     headers: {
-                        "X-CSRFTOKEN": getCookie("csrf_token"),
+                        "X-Csrftoken": getCookie('_xsrf')
                     },
                     success: function (resp) {
                         if ("4101" == resp.errno) {
@@ -83,7 +83,7 @@ $(document).ready(function () {
                     data:JSON.stringify(data),
                     contentType:"application/json",
                     headers: {
-                        "X-CSRFTOKEN":getCookie("csrf_token")
+                        "X-Csrftoken": getCookie('_xsrf')
                     },
                     dataType:"json",
                     success:function (resp) {

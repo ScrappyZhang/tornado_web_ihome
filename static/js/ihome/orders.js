@@ -19,7 +19,7 @@ $(document).ready(function(){
     $(window).on('resize', centerModals);
 
     // 查询房客订单
-    $.get("/user/orders?role=custom", function(resp){
+    $.get("/order/list?role=custom", function(resp){
         if ("0" == resp.errno) {
             $(".orders-list").html(template("orders-list-tmpl", {orders:resp.data.orders}));
             // 评论处理
@@ -42,7 +42,7 @@ $(document).ready(function(){
                     contentType:"application/json",
                     dataType:"json",
                     headers:{
-                        "X-CSRFToken":getCookie("csrf_token")
+                        "X-Csrftoken": getCookie('_xsrf')
                     },
                     success:function (resp) {
                         if ("4101" == resp.errno) {
