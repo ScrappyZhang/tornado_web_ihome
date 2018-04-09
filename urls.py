@@ -25,6 +25,7 @@ urls = [
     (r'^/order$', order.OrderHandler),  # 下单
     (r'^/order/list$',order.OrderListHandler), # 订单页 房东与客户
     (r'^/order/(?P<order_id>\d+)/status$', order.OrderStatusHandler),  # 接单与拒单
+    (r'^/order/(?P<order_id>\d+)/comment$', order.OrderCommentHandler),  # 订单评论
     (r'^/image_code$', verifycode.ImageCodeHandler),  # 图片验证码
     (r'^/smscode$', verifycode.SmsCodeHandler),  # 短信验证码
     (r'/(.*)', StaticFileHandler,

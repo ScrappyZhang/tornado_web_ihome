@@ -177,3 +177,30 @@ class OrderStatusHandler(BaseHandler):
 
         # 5. ok
         self.write(dict(errno=RET.OK, errmsg="ok"))
+
+
+class OrderCommentHandler(BaseHandler):
+    @login_required
+    def put(self, order_id):
+        # 1. 获取参数
+        user_id = self.session.data["user_id"]
+        comment = self.json_args.get("comment")
+        # 2. 校验参数
+        if not comment:
+            return self.write({"errno": RET.PARAMERR, "errmsg": "params error"})
+        try:
+            order_id = int(order_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.PARAMERR, errmsg="参数错误"))
+        # 3. 更新数据库中评论信息
+        try:
+            # 需要确保只能评论自己下的订单
+            self.db.execute(
+                "update ih_order_info set oi_status=%(oi_status)s,oi_comment=%(comment)s where oi_order_id=%(order_id)s "
+                "and oi_status=%(status)s and oi_user_id=%(user_id)s", oi_status="COMPLETE", comment=comment, status="WAIT_COMMENT", order_id=order_id, user_id=user_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write({"errno": RET.DBERR, "errmsg": "DB error"})
+        # 4.返回数据
+        self.write({"errno": RET.OK, "errmsg": "OK"})
