@@ -71,3 +71,30 @@ class AvatarHandler(BaseHandler):
         # 6.返回数据 data
         self.write(
             dict(errno=RET.OK, errmsg="保存成功", data=dict(avatar_url="%s%s" % (constants.QINIU_URL_PREFIX, file_name))))
+
+
+class NameHandler(BaseHandler):
+    @login_required
+    def post(self):
+        # 1. 获取session中的user_id
+        user_id = self.session.data["user_id"]
+        # 2. 获取用户设置的用户名
+        name = self.json_args["name"]
+        # 2.1 校验设置用户名
+        if name in (None, ""):
+            return self.write(dict(errno=RET.PARAMERR, errmsg="用户名输入错误"))
+
+        # 3. 保存name
+        try:
+            self.db.execute_rowcount("update ih_user_profile set up_name=%s where up_user_id=%s", name, user_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write({"errcode": RET.DBERR, "errmsg": "用户名未修改"})
+
+        # 4. 修改session数据中的name字段，并保存到redis中
+        self.session.data["name"] = name
+        try:
+            self.session.save()
+        except Exception as e:
+            logging.error(e)
+        self.write({"errcode": RET.OK, "errmsg": "OK"})
