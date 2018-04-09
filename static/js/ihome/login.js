@@ -5,10 +5,10 @@ function getCookie(name) {
 //登出操作
 function logout() {
     $.ajax({
-        url:"/user/session",
+        url:"/login",
         type:"delete",
         header:{
-            "X-CSRFToken":getCookie("csrf_token")
+            "X-CSRFToken":getCookie("_xsrf")
         },
         dataType:"json",
         success:function (resp) {
@@ -52,13 +52,13 @@ $(document).ready(function() {
         //5.表单数据转化为json
         var jsonData = JSON.stringify(data);
         $.ajax({
-            url:"/user/session",
+            url:"/login",
             type:"POST",
             data:jsonData,
             contentType:"application/json",
             dataType:"json",
             headers:{
-            "X-CSRFTOKEN":getCookie("csrf_token")
+            "X-CSRFTOKEN":getCookie("_xsrf")
             },
             success: function (resp) {
                 if ("0" == resp.errno) {

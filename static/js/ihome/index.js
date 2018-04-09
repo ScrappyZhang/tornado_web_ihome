@@ -59,9 +59,9 @@ function goToSearchPage(th) {
 
 $(document).ready(function(){
     // 检查用户的登录状态
-    $.get('/user/session', function (resp) {
+    $.get('/login', function (resp) {
         if ("0" == resp.errno) {
-            $(".top-bar>.user-info>.user-name").html(resp.data.name)
+            $(".top-bar>.user-info>.user-name").html(resp.data.name);
             $(".top-bar>.user-info").show()
         }else {
             $(".top-bar>.register-login").show()
@@ -106,7 +106,7 @@ $(document).ready(function(){
             });
         }
     });
-    // TODO: 城区按钮点击之后相关操作
+    // 城区按钮点击之后相关操作
     $(".area-list a").click(function(e){
         $("#area-btn").html($(this).html());
         $(".search-btn").attr("area-id", $(this).attr("area-id"));

@@ -22,7 +22,7 @@ function generateImageCode() {
     // 1.生成uuid
     uuid = generateUUID();
     // 2. 拼接请求地址
-    var url = '/user/image_code?uuid=' + uuid + '&last_uuid=' + last_uuid;
+    var url = '/image_code?uuid=' + uuid + '&last_uuid=' + last_uuid;
     // 3. 将url赋值给img标签的src属性
     $('.image-code>img').attr('src', url);
     // 4. 记录uuid，下次使用时用于核对
@@ -50,7 +50,7 @@ function sendSMSCode() {
     // 通过ajax方式向后端接口发送请求，让后端发送短信验证码
     var datas = {mobile: mobile, text: imageCode, id: uuid};
     $.ajax({
-        url:"/user/smscode",
+        url:"/smscode",
         method:"POST",
         headers: {
             "X-Csrftoken": getCookie('_xsrf')
@@ -147,10 +147,10 @@ $(document).ready(function() {
         $(".form-register").serializeArray().map(function (x) {
             req[x.name] = x.value
         })
-        console.log(req);
+        // console.log(req);
         // ajax向后端发送注册请求
         $.ajax({
-            url:"/user/users",
+            url:"/register",
             type:"POST",
             contentType:"application/json",
             data: JSON.stringify(req),
