@@ -105,7 +105,7 @@ class NewHouseHandler(BaseHandler):
         except Exception as e:
             logging.error(e)
             return self.write(dict(errno=RET.PARAMERR, errmsg='日期错误'))
-        # TODO redis
+        # redis
         # 3. 查询房屋
         # 涉及到表： ih_house_info 房屋的基本信息  ih_user_profile 房东的用户信息 ih_order_info 房屋订单数据
         sql = "select distinct hi_title,hi_house_id,hi_price,hi_room_count,hi_address,hi_order_count,up_avatar,hi_index_image_url,hi_ctime" \

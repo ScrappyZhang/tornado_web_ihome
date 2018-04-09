@@ -7,7 +7,7 @@
 
 import os
 from handlers.BaseHandler import StaticFileBaseHandler as StaticFileHandler
-from handlers import verifycode, passport, house, profile
+from handlers import verifycode, passport, house, profile, order
 
 urls = [
     (r'^/register$', passport.RegisterHandler),  # 注册
@@ -22,6 +22,7 @@ urls = [
     (r'/house/areas', house.AreaInfoHandler),  # 获取城区信息
     (r'/house/index', house.HouseIndexHandler),  # 获取首页展示的房源
     (r'/house/(?P<house_id>\d+)$', house.DetailHouseInfoHandler),  # 房屋详情页
+    (r'/order', order.OrderHandler),  # 下单
     (r'^/image_code$', verifycode.ImageCodeHandler),  # 图片验证码
     (r'^/smscode$', verifycode.SmsCodeHandler),  # 短信验证码
     (r'/(.*)', StaticFileHandler,
