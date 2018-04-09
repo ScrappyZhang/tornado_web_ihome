@@ -67,7 +67,7 @@ class AvatarHandler(BaseHandler):
             row_count = self.db.execute_rowcount(sql, avatar=file_name, user_id=user_id)
         except Exception as e:
             logging.error(e)
-            return self.write(dict(errcode=RET.DBERR, errmsg="数据库图片保存错误"))
+            return self.write(dict(errno=RET.DBERR, errmsg="数据库图片保存错误"))
         # 6.返回数据 data
         self.write(
             dict(errno=RET.OK, errmsg="保存成功", data=dict(avatar_url="%s%s" % (constants.QINIU_URL_PREFIX, file_name))))
@@ -89,7 +89,7 @@ class NameHandler(BaseHandler):
             self.db.execute_rowcount("update ih_user_profile set up_name=%s where up_user_id=%s", name, user_id)
         except Exception as e:
             logging.error(e)
-            return self.write({"errcode": RET.DBERR, "errmsg": "用户名未修改"})
+            return self.write({"errno": RET.DBERR, "errmsg": "用户名未修改"})
 
         # 4. 修改session数据中的name字段，并保存到redis中
         self.session.data["name"] = name
@@ -97,7 +97,7 @@ class NameHandler(BaseHandler):
             self.session.save()
         except Exception as e:
             logging.error(e)
-        self.write({"errcode": RET.OK, "errmsg": "OK"})
+        self.write({"errno": RET.OK, "errmsg": "OK"})
 
 
 class AuthHandler(BaseHandler):
@@ -134,7 +134,7 @@ class AuthHandler(BaseHandler):
                                      real_name_input, id_card_input, user_id)
         except Exception as e:
             logging.error(e)
-            return self.write({"errcode": RET.DBERR, "errmsg": "update failed"})
+            return self.write({"errno": RET.DBERR, "errmsg": "update failed"})
 
         # 5、返回结果
         self.write(dict(errno=RET.OK, errmsg="OK"))
@@ -152,7 +152,7 @@ class HouseSourceHandler(BaseHandler):
             ret = self.db.query(sql, user_id)
         except Exception as e:
             logging.error(e)
-            return self.write({"errcode": RET.DBERR, "errmsg": "get data erro"})
+            return self.write({"errno": RET.DBERR, "errmsg": "get data erro"})
         # 3、返回数据errno errmsg data
         houses = []
         if ret:

@@ -45,7 +45,7 @@ $(document).ready(function(){
             contentType:"application/json",
             dataType: "json",
             headers: {
-                "X-CSRFToken": getCookie("csrf_token")
+                "X-Csrftoken": getCookie('_xsrf')
             },
             success: function (resp) {
                 if ("4101" == resp.errno) {
@@ -73,14 +73,14 @@ $(document).ready(function(){
             url: "/house/"+house_id+"/images",
             type: "post",
             headers: {
-                "X-CSRFToken": getCookie("csrf_token")
+                "X-Csrftoken": getCookie('_xsrf')
             },
             success: function (resp) {
                 if ("4101" == resp.errno) {
                     location.href = "/login.html";
                 } else if ("0" == resp.errno) {
                     // 在前端中添加一个img标签，展示上传的图片
-                    $(".house-image-cons").append('<img src="'+ resp.data.url+'">');
+                    $(".house-image-cons").append('<img src="'+ resp.url+'">');
                 } else {
                     alert(resp.errmsg);
                 }

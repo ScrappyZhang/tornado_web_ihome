@@ -17,6 +17,8 @@ urls = [
     (r'^/user/name$', profile.NameHandler),  # 用户名修改
     (r'^/user/auth$', profile.AuthHandler),  # 实名认证
     (r'^/user/houses$', profile.HouseSourceHandler),  # 房东房源
+    (r"^/house$", house.NewHouseHandler),  # 发布新房源之文字信息
+    (r"^/house/(?P<house_id>\d+)/images$", house.NewHouseImageHandler),  # 发布新房源之图片信息
     (r'/house/areas', house.AreaInfoHandler),  # 获取城区信息
     (r'/house/index', house.HouseIndexHandler),  # 获取首页展示的房源
     (r'^/image_code$', verifycode.ImageCodeHandler),  # 图片验证码
