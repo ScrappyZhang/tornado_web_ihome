@@ -21,6 +21,7 @@ urls = [
     (r"^/house/(?P<house_id>\d+)/images$", house.NewHouseImageHandler),  # 发布新房源之图片信息
     (r'/house/areas', house.AreaInfoHandler),  # 获取城区信息
     (r'/house/index', house.HouseIndexHandler),  # 获取首页展示的房源
+    (r'/house/(?P<house_id>\d+)$', house.DetailHouseInfoHandler),  # 房屋详情页
     (r'^/image_code$', verifycode.ImageCodeHandler),  # 图片验证码
     (r'^/smscode$', verifycode.SmsCodeHandler),  # 短信验证码
     (r'/(.*)', StaticFileHandler,

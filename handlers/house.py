@@ -11,6 +11,8 @@ from handlers.BaseHandler import BaseHandler
 from utils.response_code import RET
 from utils.commons import login_required
 from utils.qiniu_storage import storage
+from utils.session import Session
+
 import constants
 
 
@@ -175,3 +177,103 @@ class NewHouseImageHandler(BaseHandler):
             return self.write({"errno": RET.DBERR, "errmsg": "upload failed"})
         img_url = constants.QINIU_URL_PREFIX + img_name
         self.write({"errno": RET.OK, "errmsg": "OK", "url": img_url})
+
+
+class DetailHouseInfoHandler(BaseHandler):
+    def get(self, house_id):
+        # 前端在房屋详情页面展示时，如果浏览页面的用户不是该房屋的房东，则展示预定按钮，否则不展示，
+        # 所以需要后端返回登录用户的user_id
+        # 尝试获取用户登录的信息，若登录，则返回给前端登录用户的user_id，否则返回user_id=-1
+        # 判断参数是否有值
+        # 1. 获取session信息
+        session = Session(self)
+        user_id = session.data.get("user_id", "-1")
+        # 2. 校验参数
+        if not house_id:
+            return self.write(dict(errno=RET.PARAMERR, errmsg="缺少参数"))
+        # 3. 查询房屋信息
+        sql = "select hi_title,hi_price,hi_address,hi_room_count,hi_acreage,hi_house_unit,hi_capacity,hi_beds," \
+              "hi_deposit,hi_min_days,hi_max_days,up_name,up_avatar,hi_user_id " \
+              "from ih_house_info inner join ih_user_profile on hi_user_id=up_user_id where hi_house_id=%s"
+
+        try:
+            ret = self.db.get(sql, house_id)
+        except Exception as e:
+            logging.error(e)
+            return self.write(dict(errno=RET.DBERR, errmsg="查询错误"))
+
+        # 3.1 查询信息校验
+        if not ret:
+            return self.write(dict(errno=RET.NODATA, errmsg="查无此房"))
+        # 3.2 组织信息
+        data = {
+            "hid": house_id,
+            "user_id": ret["hi_user_id"],
+            "title": ret["hi_title"],
+            "price": ret["hi_price"],
+            "address": ret["hi_address"],
+            "room_count": ret["hi_room_count"],
+            "acreage": ret["hi_acreage"],
+            "unit": ret["hi_house_unit"],
+            "capacity": ret["hi_capacity"],
+            "beds": ret["hi_beds"],
+            "deposit": ret["hi_deposit"],
+            "min_days": ret["hi_min_days"],
+            "max_days": ret["hi_max_days"],
+            "user_name": ret["up_name"],
+            "user_avatar": constants.QINIU_URL_PREFIX + ret["up_avatar"] if ret.get("up_avatar") else ""
+        }
+
+        # 3.1 查询房屋图片信息
+        sql = "select hi_url from ih_house_image where hi_house_id=%s"
+        try:
+            ret = self.db.query(sql, house_id)
+        except Exception as e:
+            logging.error(e)
+            ret = None
+
+        # 如果查询到的图片
+        images = []
+        if ret:
+            for image in ret:
+                images.append(constants.QINIU_URL_PREFIX + image["hi_url"])
+        data["images"] = images
+
+        # 3.2 查询房屋的基本设施
+        sql = "select hf_facility_id from ih_house_facility where hf_house_id=%s"
+        try:
+            ret = self.db.query(sql, house_id)
+        except Exception as e:
+            logging.error(e)
+            ret = None
+
+        # 如果查询到设施
+        facilities = []
+        if ret:
+            for facility in ret:
+                facilities.append(facility["hf_facility_id"])
+        data["facilities"] = facilities
+
+        # 3.3 查询评论信息
+        sql = "select oi_comment,up_name,oi_utime,up_mobile from ih_order_info inner join ih_user_profile " \
+              "on oi_user_id=up_user_id where oi_house_id=%s and oi_status=4 and oi_comment is not null"
+
+        try:
+            ret = self.db.query(sql, house_id)
+        except Exception as e:
+            logging.error(e)
+            ret = None
+        comments = []
+        if ret:
+            for comment in ret:
+                comments.append(dict(
+                    user_name=comment["up_name"] if comment["up_name"] != comment["up_mobile"] else "匿名用户",
+                    content=comment["oi_comment"],
+                    ctime=comment["oi_utime"].strftime("%Y-%m-%d %H:%M:%S")
+                ))
+        data["comments"] = comments
+
+        # 4. 返回数据
+        self.write(dict(errno=RET.OK, errmsg="OK", data=data))
+        pass
+
